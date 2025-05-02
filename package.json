@@ -5,6 +5,7 @@
   "scripts": {
     "build": "tsc",
     "start": "npx tsx src/index.ts",
+    "format": "prettier --write .",
     "dev": "tsc -w & node --watch dist/index.js"
   },
   "devDependencies": {
@@ -14,6 +15,7 @@
   "dependencies": {
     "agent-twitter-client": "^0.0.18",
     "dotenv": "^16.5.0",
+    "prettier": "^3.5.3",
     "winston": "^3.17.0"
   }
 }

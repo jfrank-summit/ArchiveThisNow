@@ -3,7 +3,6 @@ import path from 'path';
 import util from 'util';
 import fs from 'fs';
 
-
 const getDefaultLogPath = () => {
   return path.join(process.cwd());
 };

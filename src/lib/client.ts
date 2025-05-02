@@ -4,7 +4,6 @@ import { createLogger } from '../utils/logger.js';
 import { createAuthenticatedScraper } from './auth.js';
 import { TwitterApi } from './types.js';
 
-
 const logger = createLogger('twitter-api');
 
 /// Helper function

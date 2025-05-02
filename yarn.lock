@@ -135,13 +135,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"archivemenow@workspace:.":
+"archivethisnow@workspace:.":
   version: 0.0.0-use.local
-  resolution: "archivemenow@workspace:."
+  resolution: "archivethisnow@workspace:."
   dependencies:
     "@types/node": ^22.15.3
     agent-twitter-client: ^0.0.18
     dotenv: ^16.5.0
+    prettier: ^3.5.3
     typescript: ^5.8.3
     winston: ^3.17.0
   languageName: unknown
@@ -544,6 +545,15 @@ __metadata:
   dependencies:
     "@noble/hashes": 1.7.1
   checksum: 582c9fe1393da917d7d00430f6ade220c36d154fc4363341d2ef896c61d8a0fbc406459f2a4d2493dce7e4c4d2373c7dfe7f592f74556e436bf50fd1d47f8eb5
+  languageName: node
+  linkType: hard
+
+"prettier@npm:^3.5.3":
+  version: 3.5.3
+  resolution: "prettier@npm:3.5.3"
+  bin:
+    prettier: bin/prettier.cjs
+  checksum: 61e97bb8e71a95d8f9c71f1fd5229c9aaa9d1e184dedb12399f76aa802fb6fdc8954ecac9df25a7f82ee7311cf8ddbd06baf5507388fc98e5b44036cc6a88a1b
   languageName: node
   linkType: hard
 

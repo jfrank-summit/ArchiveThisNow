@@ -20,11 +20,11 @@
     // "noEmit": true,
 
     /* If transpiling code: */
-    "module": "NodeNext", 
+    "module": "NodeNext",
     "outDir": "dist",
     "rootDir": "src",
-    "sourceMap": true,
+    "sourceMap": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
-} 
+}
