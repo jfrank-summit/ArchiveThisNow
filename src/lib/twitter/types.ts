@@ -11,6 +11,12 @@ export interface TwitterApi {
     ignoreConversationIds?: string[],
     sinceId?: string,
   ) => Promise<Tweet[]>;
+  getUnrepliedMentionsWithRoots: (
+    maxResults: number,
+    maxThreadDepth?: number,
+    ignoreConversationIds?: string[],
+    sinceId?: string,
+  ) => Promise<{ mention: Tweet; rootTweet: Tweet }[]>;
   getFollowingRecentTweets: (maxResults: number, numberOfUsers: number) => Promise<Tweet[]>;
   isLoggedIn: () => Promise<boolean>;
   getProfile: (username: string) => Promise<Profile>;
@@ -20,6 +26,8 @@ export interface TwitterApi {
   getMyRecentTweets: (limit: number) => Promise<Tweet[]>;
   getMyRepliedToIds: () => Promise<string[]>;
   getMyRecentReplies: (limit: number) => Promise<Tweet[]>;
+  getHeadOfConversation: (conversationId: string) => Promise<Tweet>;
+  findConversationRoot: (tweet: Tweet) => Promise<Tweet>;
   getFollowing: (userId: string, limit: number) => Promise<Profile[]>;
   getMyTimeline: (count: number, excludeIds: string[]) => Promise<Tweet[]>;
   getFollowingTimeline: (count: number, excludeIds: string[]) => Promise<Tweet[]>;

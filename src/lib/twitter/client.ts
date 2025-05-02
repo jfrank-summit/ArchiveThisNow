@@ -284,6 +284,52 @@ export const createTwitterApi = async (
         sinceId,
       ),
 
+    getUnrepliedMentionsWithRoots: async (
+      maxResults: number,
+      maxThreadDepth: number = 5,
+      ignoreConversationIds: string[] = [],
+      sinceId?: string,
+    ) => {
+      // First get all unreplied mentions
+      const mentions = await getMyUnrepliedToMentions(
+        scraper,
+        username,
+        maxThreadDepth,
+        ignoreConversationIds,
+        maxResults,
+        sinceId,
+      );
+
+      // For each mention, get the root tweet of its conversation
+      const results = await Promise.all(
+        mentions.map(async mention => {
+          let rootTweet = mention;
+
+          // If the mention has a conversationId, get the root tweet
+          if (mention.conversationId && mention.conversationId !== mention.id) {
+            try {
+              const fetchedRoot = await scraper.getTweet(mention.conversationId);
+              if (fetchedRoot) {
+                rootTweet = breakCircularReferences(fetchedRoot);
+              }
+            } catch (error) {
+              logger.warn(
+                `Error fetching root tweet for conversation ${mention.conversationId}:`,
+                error,
+              );
+            }
+          }
+
+          return {
+            mention: mention,
+            rootTweet: rootTweet,
+          };
+        }),
+      );
+
+      return results;
+    },
+
     getFollowingRecentTweets: (maxResults: number = 100, randomNumberOfUsers: number = 10) =>
       getFollowingRecentTweets(scraper, username, maxResults, randomNumberOfUsers),
 
@@ -302,6 +348,33 @@ export const createTwitterApi = async (
     getTweet: async (tweetId: string) => {
       const tweet = await scraper.getTweet(tweetId);
       return tweet ? breakCircularReferences(tweet) : null;
+    },
+
+    getHeadOfConversation: async (conversationId: string) => {
+      const head = await scraper.getTweet(conversationId);
+      if (!head) {
+        throw new Error(`Conversation head not found: ${conversationId}`);
+      }
+      return breakCircularReferences(head);
+    },
+
+    findConversationRoot: async (tweet: Tweet) => {
+      // If tweet has a conversationId and it's different from its own ID,
+      // it's part of a conversation started by someone else
+      if (tweet.conversationId && tweet.conversationId !== tweet.id) {
+        try {
+          // Get the root tweet directly using the conversationId
+          const rootTweet = await scraper.getTweet(tweet.conversationId);
+          if (rootTweet) {
+            return breakCircularReferences(rootTweet);
+          }
+        } catch (error) {
+          logger.error('Error fetching conversation root tweet:', error);
+        }
+      }
+
+      // If we couldn't get the root tweet or this is already the root tweet
+      return breakCircularReferences(tweet);
     },
 
     getRecentTweets: async (username: string, limit: number = 100) => {
