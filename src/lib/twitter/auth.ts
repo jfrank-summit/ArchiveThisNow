@@ -1,7 +1,7 @@
 import { Scraper } from 'agent-twitter-client';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { createLogger } from '../utils/logger.js';
-import { retryWithBackoff } from '../utils/retry.js';
+import { createLogger } from '../../utils/logger.js';
+import { retryWithBackoff } from '../../utils/retry.js';
 const logger = createLogger('twitter-api');
 
 const getScraperWithCookies = async (cookiesPath: string): Promise<Scraper> => {

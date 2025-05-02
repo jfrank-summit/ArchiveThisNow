@@ -1,4 +1,4 @@
-import { createAuthenticatedScraper } from './lib/auth.js';
+import { createAuthenticatedScraper } from './lib/twitter/auth.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
