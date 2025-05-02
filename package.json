@@ -1,0 +1,14 @@
+{
+  "name": "archivemenow",
+  "packageManager": "yarn@3.6.4",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "npx tsx src/index.ts",
+    "dev": "tsc -w & node --watch dist/index.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "typescript": "^5.8.3"
+  }
+}

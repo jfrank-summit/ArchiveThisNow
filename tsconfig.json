@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    /* Base Options: */
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "target": "ESNext",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "moduleDetection": "force",
+    "isolatedModules": true,
+
+    /* Strictness */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitAny": true,
+
+    /* If NOT transpiling code: */
+    "moduleResolution": "NodeNext",
+    // "module": "NodeNext",
+    // "noEmit": true,
+
+    /* If transpiling code: */
+    "module": "NodeNext", 
+    "outDir": "dist",
+    "rootDir": "src",
+    "sourceMap": true,
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"]
+} 
