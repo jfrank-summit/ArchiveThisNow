@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import { createTwitterApi } from './lib/twitter/client.js';
 import { createLogger } from './utils/logger.js';
 import { createAutoDriveApi } from '@autonomys/auto-drive';
-import { uploadExperience } from './lib/autoDrive/uploader.js';
+import { uploadJson, uploadFile } from './lib/autoDrive/uploader.js';
 
 dotenv.config();
 
@@ -24,11 +24,51 @@ const main = async () => {
     while (true) {
       const tweets = await twitterApi.getUnrepliedMentionsWithRoots(10);
       tweets.forEach(async tweet => {
-        const cid = await uploadExperience(
+        const photoCids = [];
+        if (tweet.rootTweet.photos) {
+          for (let i = 0; i < tweet.rootTweet.photos.length; i++) {
+            const photo = tweet.rootTweet.photos[i];
+            if (!photo?.url) continue;
+            const photoResponse = await fetch(photo.url);
+            const photoBlob = await photoResponse.blob();
+            const cid = await uploadFile(
+              autoDriveApi,
+              new File(
+                [photoBlob],
+                `photo-${tweet?.rootTweet?.username}-${tweet?.rootTweet?.id}-${i}.jpg`,
+                { type: 'image/jpeg' },
+              ),
+            );
+            photoCids.push(cid);
+          }
+        }
+        const videoCids = [];
+        if (tweet.rootTweet.videos) {
+          for (let i = 0; i < tweet.rootTweet.videos.length; i++) {
+            const video = tweet.rootTweet.videos[i];
+            if (!video?.url) continue;
+            const videoResponse = await fetch(video.url);
+            const videoBlob = await videoResponse.blob();
+            const cid = await uploadFile(
+              autoDriveApi,
+              new File(
+                [videoBlob],
+                `video-${tweet?.rootTweet?.username}-${tweet?.rootTweet?.id}-${i}.mp4`,
+                { type: 'video/mp4' },
+              ),
+            );
+            videoCids.push(cid);
+          }
+        }
+        const cid = await uploadJson(
           autoDriveApi,
           tweet?.rootTweet?.id || '',
           tweet?.rootTweet?.username || '',
-          tweet.rootTweet,
+          {
+            tweet: tweet.rootTweet,
+            photosCids: photoCids,
+            videosCids: videoCids,
+          },
           {
             compression: true,
             password: process.env.AUTO_DRIVE_PASSWORD || '',

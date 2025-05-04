@@ -148,7 +148,7 @@ const getMyUnrepliedToMentions = async (
 
     // Skip if user has already replied
     if (repliedToIds.has(tweet.id)) {
-      logger.info(`Skipping tweet ${tweet.id} (already replied)`);
+      // logger.info(`Skipping tweet ${tweet.id} (already replied)`);
       continue;
     }
     newMentions.push(tweet);
@@ -423,11 +423,11 @@ export const createTwitterApi = async (
 
       const tweetId = await findTweetId(scraper, text, username);
       if (tweetId) {
-        logger.info('Tweet sent and ID confirmed', { text, inReplyTo, id: tweetId });
+        // logger.info('Tweet sent and ID confirmed', { text, inReplyTo, id: tweetId });
         return tweetId;
       }
 
-      logger.warn('Tweet sent but ID could not be confirmed', { text, inReplyTo });
+      // logger.warn('Tweet sent but ID could not be confirmed', { text, inReplyTo });
       return '';
     },
 
