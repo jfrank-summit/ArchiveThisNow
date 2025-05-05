@@ -33,3 +33,6 @@ lerna-debug.log*
 
 # Cookies
 cookies.json
+
+# Data
+data/

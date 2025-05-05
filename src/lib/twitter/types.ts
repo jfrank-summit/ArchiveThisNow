@@ -37,3 +37,32 @@ export interface TwitterApi {
   likeTweet: (tweetId: string) => Promise<void>;
   followUser: (username: string) => Promise<void>;
 }
+
+// Types based on the agent-twitter-client library
+interface DirectMessage {
+  id: string;
+  text: string;
+  senderId: string;
+  recipientId: string;
+  createdAt: string;
+  mediaUrls?: string[];
+  senderScreenName?: string;
+  recipientScreenName?: string;
+}
+
+export interface DirectMessageConversation {
+  conversationId: string;
+  messages: DirectMessage[];
+  participants: {
+    id: string;
+    screenName: string;
+  }[];
+}
+
+// Interface for unread messages
+export interface UnreadMessage {
+  conversationId: string;
+  message: DirectMessage;
+  senderScreenName: string;
+  recipientScreenName: string;
+}
