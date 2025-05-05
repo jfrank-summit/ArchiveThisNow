@@ -16,33 +16,38 @@ export async function syncDirectMessages(scraper: Scraper, userId: string): Prom
 
     for (const conversation of response.conversations) {
       if (!conversation.messages || conversation.messages.length === 0) continue;
-
-      // Sort messages by createdAt (newest first)
-      const sortedMessages = [...conversation.messages].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
-
+      let hasUnreadMessages = 0;
+      // Sort messages by their id (newest first)
+      const sortedMessages = [...conversation.messages].sort((a, b) => b.id.localeCompare(a.id));
       // find the last messages from our user if any!
       const ourMessages = sortedMessages.filter(msg => msg.senderId === userId);
-      const lastOurMessage = ourMessages.length > 0 ? ourMessages[ourMessages.length - 1] : null;
-
+      const lastOurMessage = ourMessages.length > 0 ? ourMessages[0] : null;
       const latestMessage = sortedMessages[0];
+      hasUnreadMessages = sortedMessages[0]?.senderId !== userId ? 1 : 0;
+
       if (!latestMessage) continue;
 
       // Determine the sender and recipient for this message
       const sender = response.users.find(user => user.id === latestMessage.senderId);
       const recipient = response.users.find(user => user.id === latestMessage.recipientId);
-
-      db.upsertConversation(
-        conversation.conversationId,
-        latestMessage.id,
-        latestMessage.createdAt,
-        latestMessage.senderId,
-        sender?.screenName || '',
-        latestMessage.recipientId,
-        recipient?.screenName || '',
-      );
-
+      const existingConversation = db.getConversation(conversation.conversationId);
+      if (
+        existingConversation?.last_message_id !== latestMessage.id ||
+        existingConversation.our_last_message_id !== lastOurMessage?.id
+      ) {
+        console.log('updating db');
+        const _updateDb = db.upsertConversation(
+          conversation.conversationId,
+          latestMessage.id,
+          latestMessage.createdAt,
+          lastOurMessage?.id || '0',
+          latestMessage.senderId,
+          sender?.screenName || '',
+          latestMessage.recipientId,
+          recipient?.screenName || '',
+          hasUnreadMessages,
+        );
+      }
       // If this is a new message and it's not from us, count it as new
       if (latestMessage.senderId !== userId) {
         newMessagesCount++;
@@ -78,10 +83,15 @@ export async function sendReply(
   scraper: Scraper,
   conversationId: string,
   text: string,
+  userId: string,
 ): Promise<void> {
   try {
-    await scraper.sendDirectMessage(conversationId, text);
-    db.markConversationAsRead(conversationId);
+    const _reply = await scraper.sendDirectMessage(conversationId, text);
+    const _markAsRead = db.markConversationAsRead(conversationId);
+    // fallback to syncDirectMessages
+    if (!_reply) {
+      await syncDirectMessages(scraper, userId);
+    }
     logger.info('Replied to conversation', { conversationId });
   } catch (error) {
     logger.error('Error sending direct message reply:', error);
@@ -120,7 +130,6 @@ export async function getAllUnreadMessages(
 
     // First get all unread conversations from the database
     const unreadConversations = db.getUnreadConversations();
-    logger.info(`Found ${unreadConversations.length} unread conversations in database`);
 
     if (unreadConversations.length === 0) {
       return [];
@@ -150,24 +159,18 @@ export async function getAllUnreadMessages(
         a.id.localeCompare(b.id),
       );
 
-      // find the last messages from our user if any!
-      const ourMessages = sortedMessages.filter(msg => msg.senderId === userId);
-      const lastOurMessage = ourMessages.length > 0 ? ourMessages[ourMessages.length - 1] : null;
+      // Get our last message ID from the database
+      const ourLastMessageId = dbConversation.our_last_message_id || '0';
 
-      // messages to process are all messages after the last message from our user
-      const messagesToProcess = sortedMessages.filter(msg => msg.id > (lastOurMessage?.id || 0));
-
-      logger.info(
-        `Found ${messagesToProcess.length} messages after timestamp ${dbConversation.last_message_timestamp} for conversation ${dbConversation.conversation_id}`,
+      // Messages to process are all messages that are:
+      // 1. Not from our user
+      // 2. And either have arrived after our last message or there is no last message from us
+      const messagesToProcess = sortedMessages.filter(
+        msg => msg.senderId !== userId && msg.id > ourLastMessageId,
       );
 
       // Add all unread messages to our result array with conversation context
       for (const message of messagesToProcess) {
-        // Skip messages from our own user - we only care about messages sent to us
-        if (message.senderId === userId) {
-          continue;
-        }
-
         const sender = response.users.find(user => user.id === message.senderId);
         const recipient = response.users.find(user => user.id === message.recipientId);
 

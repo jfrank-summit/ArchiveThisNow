@@ -5,6 +5,20 @@ import { createLogger } from '../../utils/logger.js';
 const logger = createLogger('dm-database');
 let db: Database.Database | null = null;
 
+// Define interface for a conversation record
+interface ConversationRecord {
+  conversation_id: string;
+  last_message_id: string;
+  last_message_timestamp: string;
+  sender_id: string;
+  sender_screen_name: string;
+  recipient_id: string;
+  recipient_screen_name: string;
+  our_last_message_id: string | null;
+  has_unread_messages: number;
+  updated_at: string;
+}
+
 /**
  * Initialize the database connection and schema
  */
@@ -21,6 +35,7 @@ export function initializeDatabase(dbPath: string): Database.Database {
       sender_screen_name TEXT,
       recipient_id TEXT,
       recipient_screen_name TEXT,
+      our_last_message_id TEXT,
       has_unread_messages BOOLEAN NOT NULL DEFAULT 1,
       updated_at TEXT NOT NULL
     );
@@ -48,27 +63,32 @@ export function upsertConversation(
   conversationId: string,
   lastMessageId: string,
   lastMessageTimestamp: string,
+  our_last_message_id: string,
   senderId: string,
   senderScreenName: string,
   recipientId: string,
   recipientScreenName: string,
+  hasUnreadMessages: number,
 ): void {
   const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO conversations 
-      (conversation_id, last_message_id, last_message_timestamp, sender_id, sender_screen_name, recipient_id, recipient_screen_name, has_unread_messages, updated_at)
-    VALUES 
-      (?, ?, ?, ?, ?, ?, ?, 1, datetime('now'))
+  const upsertStmt = db.prepare(`
+    INSERT INTO conversations (
+      conversation_id, last_message_id, last_message_timestamp, sender_id, sender_screen_name,
+      recipient_id, recipient_screen_name, our_last_message_id, has_unread_messages, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
     ON CONFLICT(conversation_id) DO UPDATE SET
-      last_message_id = CASE WHEN last_message_id < ? THEN ? ELSE last_message_id END,
-      last_message_timestamp = CASE WHEN last_message_id < ? THEN ? ELSE last_message_timestamp END,
-      sender_id = CASE WHEN last_message_id < ? THEN ? ELSE sender_id END,
-      sender_screen_name = CASE WHEN last_message_id < ? THEN ? ELSE sender_screen_name END,
-      has_unread_messages = CASE WHEN last_message_id < ? THEN 1 ELSE has_unread_messages END,
+      last_message_id = excluded.last_message_id,
+      last_message_timestamp = excluded.last_message_timestamp,
+      sender_id = excluded.sender_id,
+      sender_screen_name = excluded.sender_screen_name,
+      recipient_id = excluded.recipient_id,
+      recipient_screen_name = excluded.recipient_screen_name,
+      our_last_message_id = excluded.our_last_message_id,
+      has_unread_messages = excluded.has_unread_messages,
       updated_at = datetime('now')
   `);
 
-  stmt.run(
+  upsertStmt.run(
     conversationId,
     lastMessageId,
     lastMessageTimestamp,
@@ -76,15 +96,8 @@ export function upsertConversation(
     senderScreenName,
     recipientId,
     recipientScreenName,
-    lastMessageId,
-    lastMessageId,
-    lastMessageId,
-    lastMessageTimestamp,
-    lastMessageId,
-    senderId,
-    lastMessageId,
-    senderScreenName,
-    lastMessageId,
+    our_last_message_id,
+    hasUnreadMessages,
   );
 }
 
@@ -106,7 +119,7 @@ export function markConversationAsRead(conversationId: string): void {
 /**
  * Get all conversations with unread messages
  */
-export function getUnreadConversations(): any[] {
+export function getUnreadConversations(): ConversationRecord[] {
   const db = getDatabase();
   const stmt = db.prepare(`
     SELECT * FROM conversations 
@@ -114,33 +127,33 @@ export function getUnreadConversations(): any[] {
     ORDER BY last_message_timestamp DESC
   `);
 
-  return stmt.all();
+  return stmt.all() as ConversationRecord[];
 }
 
 /**
  * Get a single conversation by ID
  */
-export function getConversation(conversationId: string): any {
+export function getConversation(conversationId: string): ConversationRecord | undefined {
   const db = getDatabase();
   const stmt = db.prepare(`
     SELECT * FROM conversations 
     WHERE conversation_id = ?
   `);
 
-  return stmt.get(conversationId);
+  return stmt.get(conversationId) as ConversationRecord | undefined;
 }
 
 /**
  * Get all conversations
  */
-export function getAllConversations(): any[] {
+export function getAllConversations(): ConversationRecord[] {
   const db = getDatabase();
   const stmt = db.prepare(`
     SELECT * FROM conversations 
     ORDER BY last_message_timestamp DESC
   `);
 
-  return stmt.all();
+  return stmt.all() as ConversationRecord[];
 }
 
 /**

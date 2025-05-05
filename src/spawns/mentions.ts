@@ -2,8 +2,7 @@ import { uploadTweet } from '../utils/tweetUploader.js';
 import { TwitterApi } from '../lib/twitter/types.js';
 export const mentions = async (twitterApi: TwitterApi, autoDriveApi: any) => {
   while (true) {
-    const tweets = await twitterApi.getUnrepliedMentionsWithRoots(20);
-    console.log(tweets);
+    const tweets = await twitterApi.getUnrepliedMentionsWithRoots(50);
     for (const tweet of tweets) {
       const cid = await uploadTweet(tweet.rootTweet, autoDriveApi);
       const _likeMention = await twitterApi.likeTweet(tweet.mention.id || '');
