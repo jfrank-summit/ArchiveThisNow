@@ -22,37 +22,30 @@ export async function syncDirectMessages(scraper: Scraper, userId: string): Prom
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
 
+      // find the last messages from our user if any!
+      const ourMessages = sortedMessages.filter(msg => msg.senderId === userId);
+      const lastOurMessage = ourMessages.length > 0 ? ourMessages[ourMessages.length - 1] : null;
+
       const latestMessage = sortedMessages[0];
       if (!latestMessage) continue;
 
-      // Find existing conversation in DB
-      const existingConversation = db.getConversation(conversation.conversationId);
+      // Determine the sender and recipient for this message
+      const sender = response.users.find(user => user.id === latestMessage.senderId);
+      const recipient = response.users.find(user => user.id === latestMessage.recipientId);
 
-      // Check if we have a new message based on timestamp only
-      const isNewMessage =
-        !existingConversation ||
-        new Date(latestMessage.createdAt).getTime() >
-          new Date(existingConversation.last_message_timestamp).getTime();
+      db.upsertConversation(
+        conversation.conversationId,
+        latestMessage.id,
+        latestMessage.createdAt,
+        latestMessage.senderId,
+        sender?.screenName || '',
+        latestMessage.recipientId,
+        recipient?.screenName || '',
+      );
 
-      if (isNewMessage) {
-        // Determine the sender and recipient for this message
-        const sender = response.users.find(user => user.id === latestMessage.senderId);
-        const recipient = response.users.find(user => user.id === latestMessage.recipientId);
-
-        db.upsertConversation(
-          conversation.conversationId,
-          latestMessage.id,
-          latestMessage.createdAt,
-          latestMessage.senderId,
-          sender?.screenName || '',
-          latestMessage.recipientId,
-          recipient?.screenName || '',
-        );
-
-        // If this is a new message and it's not from us, count it as new
-        if (latestMessage.senderId !== userId) {
-          newMessagesCount++;
-        }
+      // If this is a new message and it's not from us, count it as new
+      if (latestMessage.senderId !== userId) {
+        newMessagesCount++;
       }
     }
 
