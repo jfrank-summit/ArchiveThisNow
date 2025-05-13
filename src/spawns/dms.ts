@@ -50,6 +50,6 @@ export const dms = async (profile: any, twitterApi: any, autoDriveApi: any) => {
     } else {
       logger.info('No unread messages found in any conversations');
     }
-    const _timer = await new Promise(resolve => setTimeout(resolve, 900000));
+    const _timer = await new Promise(resolve => setTimeout(resolve, parseInt(process.env.DMS_SPAWN_INTERVAL || '900000')));
   }
 };
