@@ -16,7 +16,7 @@ ArchiveThisNow! listens for Twitter mentions and DMs containing tweet links, the
 ## Prerequisites
 
 - Node.js (v20+)
-- Yarn
+- Yarn Berry
 - Twitter account credentials
 - [AutoDrive API key](https://ai3.storage/)
 
