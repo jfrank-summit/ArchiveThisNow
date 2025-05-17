@@ -7,7 +7,7 @@ const logger = createLogger('dm-service');
 /**
  * Fetch all direct messages and update the database with new messages
  */
-export async function syncDirectMessages(scraper: Scraper, userId: string): Promise<number> {
+export const syncDirectMessages = async (scraper: Scraper, userId: string): Promise<number> => {
   try {
     logger.info('Syncing direct messages');
     const response = await scraper.getDirectMessageConversations(userId);
@@ -60,31 +60,31 @@ export async function syncDirectMessages(scraper: Scraper, userId: string): Prom
     logger.error('Error syncing direct messages:', error);
     return 0;
   }
-}
+};
 
 /**
  * Get all unread conversations
  */
-export function getUnreadConversations() {
+export const getUnreadConversations = () => {
   return db.getUnreadConversations();
-}
+};
 
 /**
  * Mark a conversation as read
  */
-export function markAsRead(conversationId: string) {
+export const markAsRead = (conversationId: string) => {
   db.markConversationAsRead(conversationId);
-}
+};
 
 /**
  * Send a direct message reply and mark the conversation as read
  */
-export async function sendReply(
+export const sendReply = async (
   scraper: Scraper,
   conversationId: string,
   text: string,
   userId: string,
-): Promise<void> {
+): Promise<void> => {
   try {
     const _reply = await scraper.sendDirectMessage(conversationId, text);
     const _markAsRead = db.markConversationAsRead(conversationId);
@@ -97,16 +97,16 @@ export async function sendReply(
     logger.error('Error sending direct message reply:', error);
     throw error;
   }
-}
+};
 
 /**
  * Get full conversation details from Twitter
  */
-export async function getConversationDetails(
+export const getConversationDetails = async (
   scraper: Scraper,
   userId: string,
   conversationId: string,
-): Promise<DirectMessageConversation | null> {
+): Promise<DirectMessageConversation | null> => {
   try {
     const response = await scraper.getDirectMessageConversations(userId);
     return response.conversations.find(conv => conv.conversationId === conversationId) || null;
@@ -114,17 +114,17 @@ export async function getConversationDetails(
     logger.error('Error getting conversation details:', error);
     return null;
   }
-}
+};
 
 /**
  * Get all unread messages from all unread conversations
  * This function fetches fresh data from Twitter for each unread conversation
  * and returns all messages that are newer than the last read message
  */
-export async function getAllUnreadMessages(
+export const getAllUnreadMessages = async (
   scraper: Scraper,
   userId: string,
-): Promise<UnreadMessage[]> {
+): Promise<UnreadMessage[]> => {
   try {
     logger.info('Fetching all unread messages');
 
@@ -189,4 +189,4 @@ export async function getAllUnreadMessages(
     logger.error('Error fetching unread messages:', error);
     return [];
   }
-}
+};

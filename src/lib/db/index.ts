@@ -22,7 +22,7 @@ interface ConversationRecord {
 /**
  * Initialize the database connection and schema
  */
-export function initializeDatabase(dbPath: string): Database.Database {
+export const initializeDatabase = (dbPath: string): Database.Database => {
   if (db) return db;
 
   db = new Database(dbPath);
@@ -40,26 +40,41 @@ export function initializeDatabase(dbPath: string): Database.Database {
       updated_at TEXT NOT NULL
     );
   `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS processed_tweets (
+      tweet_id TEXT PRIMARY KEY,
+      cid TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS mentions_log (
+      tweet_id TEXT PRIMARY KEY,
+      username TEXT NOT NULL,
+      tweet_timestamp TEXT NOT NULL,
+      logged_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
 
   logger.info('Database initialized');
   return db;
-}
+};
 
 /**
  * Get database instance, initializing if necessary
  */
-export function getDatabase(): Database.Database {
+export const getDatabase = (): Database.Database => {
   if (!db) {
     const dbPath = path.resolve(process.cwd(), 'data', 'dm-conversations.db');
     return initializeDatabase(dbPath);
   }
   return db;
-}
+};
 
 /**
  * Update or insert a conversation with its latest message
  */
-export function upsertConversation(
+export const upsertConversation = (
   conversationId: string,
   lastMessageId: string,
   lastMessageTimestamp: string,
@@ -69,7 +84,7 @@ export function upsertConversation(
   recipientId: string,
   recipientScreenName: string,
   hasUnreadMessages: number,
-): void {
+): void => {
   const db = getDatabase();
   const upsertStmt = db.prepare(`
     INSERT INTO conversations (
@@ -99,12 +114,12 @@ export function upsertConversation(
     our_last_message_id,
     hasUnreadMessages,
   );
-}
+};
 
 /**
  * Mark a conversation as read
  */
-export function markConversationAsRead(conversationId: string): void {
+export const markConversationAsRead = (conversationId: string): void => {
   const db = getDatabase();
   const stmt = db.prepare(`
     UPDATE conversations 
@@ -114,12 +129,12 @@ export function markConversationAsRead(conversationId: string): void {
   `);
 
   stmt.run(conversationId);
-}
+};
 
 /**
  * Get all conversations with unread messages
  */
-export function getUnreadConversations(): ConversationRecord[] {
+export const getUnreadConversations = (): ConversationRecord[] => {
   const db = getDatabase();
   const stmt = db.prepare(`
     SELECT * FROM conversations 
@@ -128,12 +143,12 @@ export function getUnreadConversations(): ConversationRecord[] {
   `);
 
   return stmt.all() as ConversationRecord[];
-}
+};
 
 /**
  * Get a single conversation by ID
  */
-export function getConversation(conversationId: string): ConversationRecord | undefined {
+export const getConversation = (conversationId: string): ConversationRecord | undefined => {
   const db = getDatabase();
   const stmt = db.prepare(`
     SELECT * FROM conversations 
@@ -141,12 +156,73 @@ export function getConversation(conversationId: string): ConversationRecord | un
   `);
 
   return stmt.get(conversationId) as ConversationRecord | undefined;
-}
+};
+
+/**
+ * Get the CID of a processed tweet.
+ * @param tweetId The ID of the tweet to check.
+ * @returns The CID if the tweet has been processed, otherwise null.
+ */
+export const getProcessedTweetCid = (tweetId: string): string | null => {
+  const db = getDatabase();
+  const stmt = db.prepare(`
+    SELECT cid FROM processed_tweets
+    WHERE tweet_id = ?
+  `);
+  const result = stmt.get(tweetId) as { cid: string } | undefined;
+  return result ? result.cid : null;
+};
+
+/**
+ * Add a processed tweet to the database.
+ * @param tweetId The ID of the tweet.
+ * @param cid The CID associated with the tweet.
+ */
+export const addProcessedTweet = (tweetId: string, cid: string): void => {
+  const db = getDatabase();
+  const stmt = db.prepare(`
+    INSERT INTO processed_tweets (tweet_id, cid)
+    VALUES (?, ?)
+    ON CONFLICT(tweet_id) DO NOTHING;
+  `);
+  stmt.run(tweetId, cid);
+};
+
+/**
+ * Log a mention tweet.
+ * @param tweetId The ID of the mention tweet.
+ * @param username The username of the user who sent the mention.
+ * @param tweetTimestamp The timestamp of when the mention tweet was created.
+ */
+export const logMention = (tweetId: string, username: string, tweetTimestamp: string): void => {
+  const db = getDatabase();
+  const stmt = db.prepare(`
+    INSERT INTO mentions_log (tweet_id, username, tweet_timestamp)
+    VALUES (?, ?, ?)
+    ON CONFLICT(tweet_id) DO NOTHING;
+  `);
+  stmt.run(tweetId, username, tweetTimestamp);
+};
+
+/**
+ * Check if a mention tweet has already been replied to.
+ * @param tweetId The ID of the mention tweet to check.
+ * @returns True if the tweet has been replied to, false otherwise.
+ */
+export const hasRepliedToMention = (tweetId: string): boolean => {
+  const db = getDatabase();
+  const stmt = db.prepare(`
+    SELECT 1 FROM mentions_log
+    WHERE tweet_id = ?
+  `);
+  const result = stmt.get(tweetId);
+  return !!result;
+};
 
 /**
  * Get all conversations
  */
-export function getAllConversations(): ConversationRecord[] {
+export const getAllConversations = (): ConversationRecord[] => {
   const db = getDatabase();
   const stmt = db.prepare(`
     SELECT * FROM conversations 
@@ -154,14 +230,14 @@ export function getAllConversations(): ConversationRecord[] {
   `);
 
   return stmt.all() as ConversationRecord[];
-}
+};
 
 /**
  * Close the database connection
  */
-export function closeDatabase(): void {
+export const closeDatabase = (): void => {
   if (db) {
     db.close();
     db = null;
   }
-}
+};
