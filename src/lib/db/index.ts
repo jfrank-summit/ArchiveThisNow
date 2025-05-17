@@ -58,7 +58,7 @@ export const initializeDatabase = (dbPath: string): Database.Database => {
 
   logger.info('Database initialized');
   return db;
-}
+};
 
 /**
  * Get database instance, initializing if necessary
@@ -69,7 +69,7 @@ export const getDatabase = (): Database.Database => {
     return initializeDatabase(dbPath);
   }
   return db;
-}
+};
 
 /**
  * Update or insert a conversation with its latest message
@@ -114,7 +114,7 @@ export const upsertConversation = (
     our_last_message_id,
     hasUnreadMessages,
   );
-}
+};
 
 /**
  * Mark a conversation as read
@@ -129,7 +129,7 @@ export const markConversationAsRead = (conversationId: string): void => {
   `);
 
   stmt.run(conversationId);
-}
+};
 
 /**
  * Get all conversations with unread messages
@@ -143,7 +143,7 @@ export const getUnreadConversations = (): ConversationRecord[] => {
   `);
 
   return stmt.all() as ConversationRecord[];
-}
+};
 
 /**
  * Get a single conversation by ID
@@ -156,7 +156,7 @@ export const getConversation = (conversationId: string): ConversationRecord | un
   `);
 
   return stmt.get(conversationId) as ConversationRecord | undefined;
-}
+};
 
 /**
  * Get the CID of a processed tweet.
@@ -171,7 +171,7 @@ export const getProcessedTweetCid = (tweetId: string): string | null => {
   `);
   const result = stmt.get(tweetId) as { cid: string } | undefined;
   return result ? result.cid : null;
-}
+};
 
 /**
  * Add a processed tweet to the database.
@@ -186,7 +186,7 @@ export const addProcessedTweet = (tweetId: string, cid: string): void => {
     ON CONFLICT(tweet_id) DO NOTHING;
   `);
   stmt.run(tweetId, cid);
-}
+};
 
 /**
  * Log a mention tweet.
@@ -202,7 +202,7 @@ export const logMention = (tweetId: string, username: string, tweetTimestamp: st
     ON CONFLICT(tweet_id) DO NOTHING;
   `);
   stmt.run(tweetId, username, tweetTimestamp);
-}
+};
 
 /**
  * Check if a mention tweet has already been replied to.
@@ -230,7 +230,7 @@ export const getAllConversations = (): ConversationRecord[] => {
   `);
 
   return stmt.all() as ConversationRecord[];
-}
+};
 
 /**
  * Close the database connection
@@ -240,4 +240,4 @@ export const closeDatabase = (): void => {
     db.close();
     db = null;
   }
-}
+};

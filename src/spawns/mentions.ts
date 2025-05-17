@@ -1,6 +1,11 @@
 import { uploadTweet } from '../utils/tweetUploader.js';
 import { TwitterApi } from '../lib/twitter/types.js';
-import { getProcessedTweetCid, addProcessedTweet, hasRepliedToMention, logMention } from '../lib/db/index.js';
+import {
+  getProcessedTweetCid,
+  addProcessedTweet,
+  hasRepliedToMention,
+  logMention,
+} from '../lib/db/index.js';
 
 export const mentions = async (twitterApi: TwitterApi, autoDriveApi: any) => {
   while (true) {
@@ -24,7 +29,11 @@ export const mentions = async (twitterApi: TwitterApi, autoDriveApi: any) => {
       } else {
         cid = await uploadTweet(tweet.rootTweet, autoDriveApi);
         const _addProcessedTweet = addProcessedTweet(rootTweetId, cid);
-        const _logMention = logMention(tweet.mention.id || '', tweet.mention.username || '', String(tweet.mention.timestamp || ''));
+        const _logMention = logMention(
+          tweet.mention.id || '',
+          tweet.mention.username || '',
+          String(tweet.mention.timestamp || ''),
+        );
         console.log(`Tweet ${rootTweetId} processed and stored with CID: ${cid}`);
       }
 
@@ -35,6 +44,8 @@ export const mentions = async (twitterApi: TwitterApi, autoDriveApi: any) => {
       };
       const reply = await twitterApi.sendTweet(sendTweet.text, sendTweet.inReplyTo);
     }
-    const _timer = await new Promise(resolve => setTimeout(resolve, parseInt(process.env.MENTIONS_SPAWN_INTERVAL || '900000')));
+    const _timer = await new Promise(resolve =>
+      setTimeout(resolve, parseInt(process.env.MENTIONS_SPAWN_INTERVAL || '900000')),
+    );
   }
 };

@@ -44,7 +44,6 @@ const main = async () => {
   }
 };
 
-// Run the main function
 main().catch(error => {
   logger.error('Unhandled error in main:', error);
 });

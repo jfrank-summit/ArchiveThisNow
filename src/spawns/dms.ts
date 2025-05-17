@@ -1,4 +1,4 @@
-import { getAllUnreadMessages, markAsRead, sendReply } from '../lib/twitter/dm-service.js';
+import { getAllUnreadMessages, sendReply } from '../lib/twitter/dm-service.js';
 import { syncDirectMessages } from '../lib/twitter/dm-service.js';
 import { createLogger } from '../utils/logger.js';
 import { interpretDM } from '../utils/dmInterpreter.js';
@@ -49,7 +49,8 @@ export const dms = async (profile: any, twitterApi: any, autoDriveApi: any) => {
           const _reply = await sendReply(
             twitterApi.scraper,
             unreadMessage.conversationId,
-            `Thanks for your message: "${unreadMessage.message.text}". This is an automated reply. Currently I only can store your sent tweets permanently on blockchain. We can chat later :)`,
+            `Thanks for your message: "${unreadMessage.message.text}". This is an automated reply.
+             Currently I only can store your sent tweets permanently on blockchain. We can chat later :)`,
             profile.userId || '',
           );
         }
@@ -57,6 +58,8 @@ export const dms = async (profile: any, twitterApi: any, autoDriveApi: any) => {
     } else {
       logger.info('No unread messages found in any conversations');
     }
-    const _timer = await new Promise(resolve => setTimeout(resolve, parseInt(process.env.DMS_SPAWN_INTERVAL || '900000')));
+    const _timer = await new Promise(resolve =>
+      setTimeout(resolve, parseInt(process.env.DMS_SPAWN_INTERVAL || '900000')),
+    );
   }
 };
