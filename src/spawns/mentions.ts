@@ -1,11 +1,16 @@
 import { uploadTweet } from '../utils/tweetUploader.js';
 import { TwitterApi } from '../lib/twitter/types.js';
-import { getProcessedTweetCid, addProcessedTweet } from '../lib/db/index.js';
+import { getProcessedTweetCid, addProcessedTweet, hasRepliedToMention, logMention } from '../lib/db/index.js';
 
 export const mentions = async (twitterApi: TwitterApi, autoDriveApi: any) => {
   while (true) {
     const tweets = await twitterApi.getUnrepliedMentionsWithRoots(50);
     for (const tweet of tweets) {
+      const hasReplied = hasRepliedToMention(tweet.mention.id || '');
+      if (hasReplied) {
+        console.log(`Tweet ${tweet.mention.id} already replied to, skipping`);
+        continue;
+      }
       const rootTweetId = tweet.rootTweet.id;
 
       if (!rootTweetId) {
@@ -19,6 +24,7 @@ export const mentions = async (twitterApi: TwitterApi, autoDriveApi: any) => {
       } else {
         cid = await uploadTweet(tweet.rootTweet, autoDriveApi);
         const _addProcessedTweet = addProcessedTweet(rootTweetId, cid);
+        const _logMention = logMention(tweet.mention.id || '', tweet.mention.username || '', String(tweet.mention.timestamp || ''));
         console.log(`Tweet ${rootTweetId} processed and stored with CID: ${cid}`);
       }
 
