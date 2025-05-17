@@ -44,8 +44,6 @@ export const mentions = async (twitterApi: TwitterApi, autoDriveApi: any) => {
       };
       const reply = await twitterApi.sendTweet(sendTweet.text, sendTweet.inReplyTo);
     }
-    const _timer = await new Promise(resolve =>
-      setTimeout(resolve, parseInt(process.env.MENTIONS_SPAWN_INTERVAL || '900000')),
-    );
+    const _timer = await new Promise(resolve => setTimeout(resolve, 60000));
   }
 };

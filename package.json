@@ -1,6 +1,5 @@
 {
   "name": "archivethisnow",
-  "packageManager": "yarn@3.6.4",
   "type": "module",
   "scripts": {
     "build": "tsc",
@@ -9,7 +8,7 @@
     "dev": "tsc -w & node --watch dist/index.js"
   },
   "devDependencies": {
-    "@types/node": "^22.15.3",
+    "@types/node": "^22.15.17",
     "typescript": "^5.8.3"
   },
   "dependencies": {
