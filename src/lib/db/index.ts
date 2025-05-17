@@ -40,6 +40,13 @@ export function initializeDatabase(dbPath: string): Database.Database {
       updated_at TEXT NOT NULL
     );
   `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS processed_tweets (
+      tweet_id TEXT PRIMARY KEY,
+      cid TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
 
   logger.info('Database initialized');
   return db;
@@ -141,6 +148,36 @@ export function getConversation(conversationId: string): ConversationRecord | un
   `);
 
   return stmt.get(conversationId) as ConversationRecord | undefined;
+}
+
+/**
+ * Get the CID of a processed tweet.
+ * @param tweetId The ID of the tweet to check.
+ * @returns The CID if the tweet has been processed, otherwise null.
+ */
+export function getProcessedTweetCid(tweetId: string): string | null {
+  const db = getDatabase();
+  const stmt = db.prepare(`
+    SELECT cid FROM processed_tweets
+    WHERE tweet_id = ?
+  `);
+  const result = stmt.get(tweetId) as { cid: string } | undefined;
+  return result ? result.cid : null;
+}
+
+/**
+ * Add a processed tweet to the database.
+ * @param tweetId The ID of the tweet.
+ * @param cid The CID associated with the tweet.
+ */
+export function addProcessedTweet(tweetId: string, cid: string): void {
+  const db = getDatabase();
+  const stmt = db.prepare(`
+    INSERT INTO processed_tweets (tweet_id, cid)
+    VALUES (?, ?)
+    ON CONFLICT(tweet_id) DO NOTHING;
+  `);
+  stmt.run(tweetId, cid);
 }
 
 /**

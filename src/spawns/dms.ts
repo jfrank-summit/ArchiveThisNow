@@ -3,6 +3,7 @@ import { syncDirectMessages } from '../lib/twitter/dm-service.js';
 import { createLogger } from '../utils/logger.js';
 import { interpretDM } from '../utils/dmInterpreter.js';
 import { uploadTweet } from '../utils/tweetUploader.js';
+import { addProcessedTweet, getProcessedTweetCid } from '../lib/db/index.js';
 
 export const dms = async (profile: any, twitterApi: any, autoDriveApi: any) => {
   const logger = createLogger('dms');
@@ -29,8 +30,14 @@ export const dms = async (profile: any, twitterApi: any, autoDriveApi: any) => {
         if (tweetId) {
           logger.info(`tweet id: ${tweetId}`);
           const tweet = await twitterApi.scraper.getTweet(tweetId);
-          const cid = await uploadTweet(tweet, autoDriveApi);
-          logger.info(`Uploaded tweet: ${cid}`);
+          let cid = getProcessedTweetCid(tweetId);
+          if (cid) {
+            logger.info(`Tweet ${tweetId} already processed. Using existing CID: ${cid}`);
+          } else {
+            cid = await uploadTweet(tweet, autoDriveApi);
+            logger.info(`Uploaded tweet: ${cid}`);
+            const _addProcessedTweet = addProcessedTweet(tweetId, cid);
+          }
           const _reply = await sendReply(
             twitterApi.scraper,
             unreadMessage.conversationId,
