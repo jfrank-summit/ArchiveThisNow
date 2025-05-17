@@ -24,10 +24,12 @@ ArchiveThisNow! listens for Twitter mentions and DMs containing tweet links, the
 
 1. Clone the repository
 2. Install dependencies:
+   
    ```
    yarn install
    ```
-3. Copy `.env.sample` to `.env` and fill in the required credentials:
+4. Copy `.env.sample` to `.env` and fill in the required credentials:
+   
    ```
    cp .env.sample .env
    ```
