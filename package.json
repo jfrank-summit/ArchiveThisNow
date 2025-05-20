@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsc",
     "start": "npx tsx src/index.ts",
-    "format": "prettier --write .",
+    "format": "prettier --write src/**/*.ts",
     "dev": "tsc -w & node --watch dist/index.js"
   },
   "devDependencies": {
