@@ -4,6 +4,7 @@ import { createLogger } from './utils/logger.js';
 import { createAutoDriveApi } from '@autonomys/auto-drive';
 import { mentions } from './spawns/mentions.js';
 import { dms } from './spawns/dms.js';
+import { testLLMConfiguration } from './utils/testLLM.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -29,6 +30,12 @@ const main = async () => {
       apiKey: process.env.AUTO_DRIVE_API_KEY || '',
       network: 'mainnet',
     });
+
+    // Test LLM configuration
+    const llmWorking = await testLLMConfiguration();
+    if (!llmWorking) {
+      logger.warn('LLM service is not working correctly. Commentary features will be disabled.');
+    }
 
     const myProfile = await twitterApi.scraper.getProfile(process.env.TWITTER_USERNAME || '');
 
