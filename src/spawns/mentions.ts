@@ -6,6 +6,11 @@ import {
   hasRepliedToMention,
   logMention,
 } from '../lib/db/index.js';
+import { generateCommentary } from '../lib/llm/service.js';
+import { convertTweetToLLMFormat } from '../utils/tweetConverter.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('mentions');
 
 export const mentions = async (twitterApi: TwitterApi, autoDriveApi: any) => {
   while (true) {
@@ -38,8 +43,35 @@ export const mentions = async (twitterApi: TwitterApi, autoDriveApi: any) => {
       }
 
       const _likeMention = await twitterApi.likeTweet(tweet.mention.id || '');
+      
+      // Generate LLM commentary for the tweet
+      let commentary = '';
+      try {
+        const tweetContent = convertTweetToLLMFormat(tweet.rootTweet);
+        const commentaryResponse = await generateCommentary(tweetContent);
+        
+        if (commentaryResponse.confidence > 0.2) {
+          commentary = commentaryResponse.commentary; 
+          logger.info(`Generated commentary for tweet ${rootTweetId}: "${commentary}"`);
+        } else {
+          logger.warn(`Low confidence commentary (${commentaryResponse.confidence}) for tweet ${rootTweetId}, using fallback`);
+        }
+      } catch (error) {
+        logger.error(`Failed to generate commentary for tweet ${rootTweetId}:`, error);
+      }
+      
+      // Construct response tweet with optional commentary
+      const autonomysLink = `https://astral.autonomys.xyz/mainnet/permanent-storage/files/${cid}`;
+      let responseText: string;
+      
+      if (commentary) {
+        responseText = `@${tweet.mention.username} ${commentary}\n\n🔗 Archived: ${autonomysLink}`;
+      } else {
+        responseText = `@${tweet.mention.username} Here is the CID: ${cid}, accessible at ${autonomysLink}`;
+      }
+      
       const sendTweet = {
-        text: `@${tweet.mention.username} Here is the cid: ${cid}, and it is accessible at https://astral.autonomys.xyz/mainnet/permanent-storage/files/${cid}`,
+        text: responseText,
         inReplyTo: tweet.mention.id,
       };
       const reply = await twitterApi.sendTweet(sendTweet.text, sendTweet.inReplyTo);
