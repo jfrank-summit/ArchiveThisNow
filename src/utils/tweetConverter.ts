@@ -32,24 +32,4 @@ export const convertTweetToLLMFormat = (tweet: Tweet): TweetContent => {
   }
 
   return tweetContent;
-}
-
-export const sanitizeTextForTwitter = (text: string, maxLength: number = 280): string => {
-  // Remove any potential line breaks and excessive whitespace
-  const cleaned = text.replace(/\s+/g, ' ').trim();
-  
-  // Truncate if necessary, ensuring we don't cut off mid-word
-  if (cleaned.length <= maxLength) {
-    return cleaned;
-  }
-  
-  const truncated = cleaned.substring(0, maxLength - 3);
-  const lastSpace = truncated.lastIndexOf(' ');
-  
-  // If we can find a space to break on, use it; otherwise just truncate
-  if (lastSpace > maxLength * 0.8) {
-    return truncated.substring(0, lastSpace) + '...';
-  }
-  
-  return truncated + '...';
 } 
