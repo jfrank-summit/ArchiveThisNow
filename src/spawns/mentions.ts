@@ -50,7 +50,7 @@ export const mentions = async (twitterApi: TwitterApi, autoDriveApi: any) => {
         const tweetContent = convertTweetToLLMFormat(tweet.rootTweet);
         const commentaryResponse = await generateCommentary(tweetContent);
         
-        if (commentaryResponse.confidence > 0.3) {
+        if (commentaryResponse.confidence > 0.2) {
           commentary = commentaryResponse.commentary; 
           logger.info(`Generated commentary for tweet ${rootTweetId}: "${commentary}"`);
         } else {

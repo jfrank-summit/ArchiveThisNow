@@ -76,15 +76,21 @@ Additional Context:
 
 Generate commentary that would make people interested in viewing the archived content. Focus on what makes this tweet significant, interesting, or worth preserving.
 
-Provide your response in the following JSON format:
+IMPORTANT: You must respond with ONLY valid JSON. Do not include any explanatory text before or after the JSON. The response must be parseable by JSON.parse().
+
+Required JSON format:
 {{
   "commentary": "Your engaging commentary here (under 200 characters)",
   "confidence": 0.85,
   "topics": ["topic1", "topic2", "topic3"]
 }}
 
-The confidence should be between 0 and 1, indicating how confident you are that this commentary is relevant and valuable.
-The topics should be 2-5 key topics or themes present in the tweet.`;
+Where:
+- commentary: string (required, under 200 characters)
+- confidence: number between 0 and 1 (required)
+- topics: array of 2-5 strings representing key themes (required)
+
+Respond with valid JSON only:`;
 
   return PromptTemplate.fromTemplate(template);
 };
@@ -125,11 +131,14 @@ export const generateCommentary = async (tweetContent: TweetContent): Promise<Co
     const response = await getLLMProvider().invoke(prompt);
     const content = typeof response.content === 'string' ? response.content : String(response.content);
 
+    // Debug: Log the raw LLM response
+    logger.info(`Raw LLM response: ${content}`);
+
     // Parse JSON response
     try {
       const parsed = JSON.parse(content);
       
-      // Validate response structure
+      // Simple validation
       if (!parsed.commentary || typeof parsed.commentary !== 'string') {
         throw new Error('Invalid commentary in response');
       }
@@ -144,15 +153,17 @@ export const generateCommentary = async (tweetContent: TweetContent): Promise<Co
       return result;
 
     } catch (parseError) {
-      logger.warn('Failed to parse LLM JSON response, extracting text manually');
+      logger.warn(`Failed to parse LLM JSON response: ${parseError}`);
+      logger.warn(`LLM returned: "${content}"`);
+      
       // Fallback: extract commentary from the response text
       const commentaryMatch = content.match(/"commentary":\s*"([^"]+)"/);
       const commentary = commentaryMatch?.[1] || content.substring(0, 100);
       
       return {
         commentary,
-        confidence: 0.3,
-        topics: [],
+        confidence: 0.2,
+        topics: ['general'],
       };
     }
 
