@@ -56,7 +56,7 @@ const createPromptTemplate = (): PromptTemplate => {
 Your task is to analyze the provided tweet content and generate relevant, insightful commentary that would be valuable when sharing the archive link.
 
 The commentary should:
-- Be concise (under 100 words)
+- Be concise (under 200 characters)
 - Highlight key insights or important aspects of the tweet
 - Be relevant and add value to the original content
 - Be engaging and encourage interaction
@@ -78,7 +78,7 @@ Generate commentary that would make people interested in viewing the archived co
 
 Provide your response in the following JSON format:
 {{
-  "commentary": "Your engaging commentary here",
+  "commentary": "Your engaging commentary here (under 200 characters)",
   "confidence": 0.85,
   "topics": ["topic1", "topic2", "topic3"]
 }}

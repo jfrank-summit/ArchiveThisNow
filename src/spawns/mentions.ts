@@ -7,7 +7,7 @@ import {
   logMention,
 } from '../lib/db/index.js';
 import { generateCommentary } from '../lib/llm/service.js';
-import { convertTweetToLLMFormat, sanitizeTextForTwitter } from '../utils/tweetConverter.js';
+import { convertTweetToLLMFormat } from '../utils/tweetConverter.js';
 import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('mentions');
@@ -51,7 +51,7 @@ export const mentions = async (twitterApi: TwitterApi, autoDriveApi: any) => {
         const commentaryResponse = await generateCommentary(tweetContent);
         
         if (commentaryResponse.confidence > 0.3) {
-          commentary = sanitizeTextForTwitter(commentaryResponse.commentary, 150); // Leave room for the rest of the message
+          commentary = commentaryResponse.commentary; 
           logger.info(`Generated commentary for tweet ${rootTweetId}: "${commentary}"`);
         } else {
           logger.warn(`Low confidence commentary (${commentaryResponse.confidence}) for tweet ${rootTweetId}, using fallback`);
@@ -69,9 +69,6 @@ export const mentions = async (twitterApi: TwitterApi, autoDriveApi: any) => {
       } else {
         responseText = `@${tweet.mention.username} Here is the CID: ${cid}, accessible at ${autonomysLink}`;
       }
-      
-      // Ensure the tweet doesn't exceed Twitter's character limit
-      responseText = sanitizeTextForTwitter(responseText, 280);
       
       const sendTweet = {
         text: responseText,
